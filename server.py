@@ -14,22 +14,42 @@ def sent_analyzer():
         function. The output returned shows the label and its confidence 
         score for the provided text.
     '''
-    to_be_analysed = request.args.get("textToAnalyze")
-    response = sentiment_analyzer(to_be_analized)
-    label = response['label']
-    score = response['score']
-
-    return "The statement was identified as {} with a score of {}.".format(label.split('_')[1, score])
+    try:
+        # Get the text from the request
+        textToAnalyze = request.args.get("textToAnalyze")
+        if not textToAnalyze:
+            raise ValueError("No text provided for analysis.")
+        
+        # Call the sentiment analysis function
+        response = sentiment_analyzer(textToAnalyze)
+        
+        # Ensure response has expected keys
+        label = response.get('label')
+        score = response.get('score')
+        if label is None or score is None:
+            raise ValueError("Invalid response from sentiment analysis.")
+        
+        # Format and return the result
+        label_part = label.split('_')[1]  # Try to split label
+        return f"The statement was identified as {label_part} with a score of {score}."
+    
+    except KeyError as e:
+        return f"Error: Missing expected key in response: {e}", 400
+    except IndexError:
+        return "Error: Unexpected format in label string; unable to split.", 400
+    except ValueError as e:
+        return f"Error: {str(e)}", 400
+    except Exception as e:
+        return f"An unexpected error occurred: {str(e)}", 500
 
 @app.route("/")
 def render_index_page():
+    return render_template('index.html')
     ''' This function initiates the rendering of the main application
         page over the Flask channel
     '''
-    #TODO
 
 if __name__ == "__main__":
-    app.run(debug=True)
-
+    app.run(host="0.0.0.0", port=5000)
     ''' This functions executes the flask app and deploys it on localhost:5000
     '''
